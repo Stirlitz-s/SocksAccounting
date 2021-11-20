@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.stsoft.socksaccounting.entity.SocksType;
 import com.stsoft.socksaccounting.jsonclasses.SocksRequestJSON;
 import com.stsoft.socksaccounting.service.SocksTypeService;
 import com.stsoft.socksaccounting.validators.RequestOperationsConstraint;
@@ -34,38 +33,16 @@ public class MainController {
     @RequestMapping(value = "/api/socks/income", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public HttpStatus inCome(@Valid @RequestBody SocksRequestJSON input) {
-        SocksType currentSocks = socksTypeService.getCottonPartEqual(input.color, input.cottonPart);
-        if (currentSocks == null) {
-            SocksType newSocks = new SocksType();
-            newSocks.setColor(input.color);
-            newSocks.setCottonPart(input.cottonPart);
-            newSocks.setQuantity(input.quantity);
-            socksTypeService.save(newSocks);
-        } else {
-            currentSocks.setQuantity(currentSocks.getQuantity() + input.quantity);
-            socksTypeService.save(currentSocks);
-        }
-
+        if (!socksTypeService.addIncomingSocks(input)) 
+            return HttpStatus.BAD_REQUEST;
         return HttpStatus.OK;
     }
 
     @RequestMapping(value = "/api/socks/outcome", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public HttpStatus outCome(@Valid @RequestBody SocksRequestJSON input) {
-        SocksType currentSocks = socksTypeService.getCottonPartEqual(input.color, input.cottonPart);
-        if (currentSocks == null)
+        if (!socksTypeService.removeDispatchSocks(input))
             return HttpStatus.BAD_REQUEST;
-        if (currentSocks.getQuantity() < input.quantity)
-            return HttpStatus.BAD_REQUEST;
-
-        SocksType newSocks = new SocksType();
-        newSocks.setColor(input.color);
-        newSocks.setCottonPart(input.cottonPart);
-        newSocks.setQuantity(input.quantity);
-        socksTypeService.save(newSocks);
-        currentSocks.setQuantity(currentSocks.getQuantity() - input.quantity);
-        socksTypeService.save(currentSocks);
-
         return HttpStatus.OK;
     }
 
@@ -74,15 +51,7 @@ public class MainController {
     public String getSocks(@RequestParam(required = true) @NotNull String color,
             @RequestParam(required = true) @NotNull @RequestOperationsConstraint String operation,
             @RequestParam(required = true) @Min(0) @Max(100) int cottonPart) {
-        switch (operation.toLowerCase()) {
-        case "morethan":
-            return socksTypeService.getCountCottonPartMoreThan(color, cottonPart) + "";
-        case "lessthan":
-            return socksTypeService.getCountCottonPartLessThan(color, cottonPart) + "";
-        case "equal":
-            return socksTypeService.getCountCottonPartEqual(color, cottonPart) + "";
-        }
-        return "0";
+        return socksTypeService.getSocks(color, operation, cottonPart);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

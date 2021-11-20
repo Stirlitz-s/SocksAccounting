@@ -24,11 +24,9 @@ public class SocksType {
     @NotNull(message = "All socks mast have a color")
     private String color;// — цвет носков, строка (например, black, red, yellow);
 
-    @NotBlank(message = "cottonPart can't be null")
     private int cottonPart; // — процентное содержание хлопка в составе носков, целое число от 0 до 100
                             // (например, 30, 18, 42);
 
-    @NotBlank(message = "quantity can't be null")
     @DecimalMin(value = "0")
     private long quantity;// — количество пар носков, целое число больше 0.
 
